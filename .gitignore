@@ -1,0 +1,17 @@
+build/
+main
+*.log
+REVIEW.md
+*.local*
+debug/
+
+# GoReleaser output
+dist/
+*.tar.gz
+*.zip
+checksums.txt
+.DS_Store
+
+.terraform/
+docs/prompt_review/
+coverage.out

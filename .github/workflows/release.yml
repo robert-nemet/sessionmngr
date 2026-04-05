@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate Tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check tag format
+        run: |
+          if [[ ! "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+            echo "Error: Tag must match pattern v*.*.* (e.g., v1.0.0, v0.2.0-alpha)"
+            exit 1
+          fi
+          echo "Tag format is valid: ${{ github.ref_name }}"
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6.3.0
+        with:
+          go-version: '1.25.x'
+          cache: true
+
+      - name: Run tests
+        run: make test-ci
+
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6.3.0
+        with:
+          go-version: '1.25.x'
+          cache: true
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v7.0.0
+        with:
+          distribution: goreleaser
+          version: 2.13.1
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7.0.0
+        if: always()
+        with:
+          name: release-artifacts
+          path: dist/
+          retention-days: 7

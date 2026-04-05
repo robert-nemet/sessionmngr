@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="002-create-api-keys-table" author="session-manager">
+        <createTable tableName="api_keys">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_api_keys_user" references="users(id)" deleteCascade="true"/>
+            </column>
+            <column name="key_hash" type="varchar(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="varchar(255)"/>
+            <column name="created_at" type="timestamptz" defaultValueComputed="NOW()"/>
+            <column name="last_used_at" type="timestamptz"/>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="002-create-api-keys-indexes" author="session-manager">
+        <createIndex tableName="api_keys" indexName="idx_api_keys_user">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="api_keys" indexName="idx_api_keys_hash_active">
+            <column name="key_hash"/>
+            <column name="is_active"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

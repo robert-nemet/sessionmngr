@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="001-create-users-table" author="session-manager">
+        <createTable tableName="users">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)"/>
+            <column name="email" type="varchar(255)">
+                <constraints unique="true"/>
+            </column>
+            <column name="metadata" type="jsonb" defaultValueComputed="'{}'::jsonb"/>
+            <column name="created_at" type="timestamptz" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="timestamptz" defaultValueComputed="NOW()"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-create-sessions-table" author="session-manager">
+        <createTable tableName="sessions">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_sessions_user" references="users(id)" deleteCascade="true"/>
+            </column>
+            <column name="title" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="messages" type="jsonb" defaultValueComputed="'[]'::jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tags" type="text[]" defaultValueComputed="'{}'::text[]"/>
+            <column name="created_at" type="timestamptz" defaultValueComputed="NOW()"/>
+            <column name="updated_at" type="timestamptz" defaultValueComputed="NOW()"/>
+        </createTable>
+        <addUniqueConstraint tableName="sessions" columnNames="user_id, title" constraintName="uq_sessions_user_title"/>
+    </changeSet>
+
+    <changeSet id="001-create-summaries-table" author="session-manager">
+        <createTable tableName="summaries">
+            <column name="id" type="uuid" defaultValueComputed="gen_random_uuid()">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="session_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_summaries_session" references="sessions(id)" deleteCascade="true"/>
+            </column>
+            <column name="user_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_summaries_user" references="users(id)" deleteCascade="true"/>
+            </column>
+            <column name="prompt_type" type="varchar(100)"/>
+            <column name="content" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message_range" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamptz" defaultValueComputed="NOW()"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="001-create-indexes" author="session-manager">
+        <createIndex tableName="sessions" indexName="idx_sessions_user">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="sessions" indexName="idx_sessions_updated">
+            <column name="updated_at" descending="true"/>
+        </createIndex>
+        <createIndex tableName="summaries" indexName="idx_summaries_session">
+            <column name="session_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
