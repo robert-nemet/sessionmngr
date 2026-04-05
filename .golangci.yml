@@ -1,0 +1,16 @@
+version: 2
+
+linters:
+  enable:
+    - revive
+    - govet
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+        disabled: false
+        arguments:
+          - "checkPrivateReceivers"
+          - "sayRepetitiveInsteadOfStutters"

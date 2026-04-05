@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: session-manager-db
+    environment:
+      POSTGRES_USER: sessionmgr
+      POSTGRES_PASSWORD: sessionmgr
+      POSTGRES_DB: session_manager
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sessionmgr -d session_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: session-manager-app
+    environment:
+      TRANSPORT_TYPE: http
+      HTTP_PORT: 8080
+      STORAGE_TYPE: postgres
+      DATABASE_URL: postgres://sessionmgr:sessionmgr@postgres:5432/session_manager
+      SESSIONS_MCP_LOG_LOCATION: stdio
+      SESSIONS_MCP_LOG_LEVEL: info
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
